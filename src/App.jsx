@@ -104,7 +104,8 @@ function App() {
             throw new Error('La struttura dei dati importati non è valida')
           }
           
-          setAllenamenti(importedData)
+          // Aggiungi gli allenamenti importati a quelli esistenti
+          setAllenamenti(prevAllenamenti => [...prevAllenamenti, ...importedData])
           setErroreImportazione(null)
         } catch (error) {
           console.error('Errore durante l\'importazione:', error)
