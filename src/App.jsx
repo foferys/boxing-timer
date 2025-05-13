@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 import Timer from './components/Timer'
 import NewWorkoutModal from './components/NewWorkoutModal'
@@ -13,6 +13,24 @@ function App() {
   const [allenamentoDaModificare, setAllenamentoDaModificare] = useState(null)
   const [erroreImportazione, setErroreImportazione] = useState(null)
   const [mostraCongratulazioni, setMostraCongratulazioni] = useState(false)
+  // Stato per gestire quale menu è aperto (null = nessun menu aperto, index = indice del menu aperto)
+  const [menuAperto, setMenuAperto] = useState(null)
+
+  // Effetto per chiudere il menu quando si clicca fuori
+  // Questo effetto aggiunge un listener globale per il click del mouse
+  // e chiude il menu se il click avviene fuori dal contenitore del menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuAperto !== null && !event.target.closest('.workout-menu-container')) {
+        setMenuAperto(null)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [menuAperto])
 
   const handleSaveAllenamento = (nuovoAllenamento, allenamentoDaModificare = null) => {
     if (allenamentoDaModificare) {
@@ -181,28 +199,42 @@ function App() {
                 <div className="workouts-list">
                   {allenamenti.map((allenamento, index) => (
                     <div key={index} className="workout-card">
-                      <h3>{allenamento.nome}</h3>
-                      <p>{allenamento.rounds.length} rounds</p>
-                      <div className="workout-actions">
-                        <button 
-                          className="btn-start"
-                          onClick={() => handleStartAllenamento(allenamento)}
-                        >
-                          Inizia
-                        </button>
-                        <button 
-                          className="btn-edit"
-                          onClick={() => handleEditAllenamento(allenamento)}
-                        >
-                          Modifica
-                        </button>
-                        <button 
-                          className="btn-delete"
-                          onClick={() => handleDeleteAllenamento(allenamento)}
-                        >
-                          Elimina
-                        </button>
+                      <div className="workout-card-header">
+                        <h3>{allenamento.nome}</h3>
+                        <div className="workout-menu-container">
+                          <button 
+                            type="button" 
+                            className="btn-menu-toggle"
+                            onClick={() => setMenuAperto(menuAperto === index ? null : index)}
+                            aria-label="Menu opzioni"
+                          >
+                            <span className="dots">⋮</span>
+                          </button>
+                          {menuAperto === index && (
+                            <div className="workout-menu">
+                              <button 
+                                className="menu-item"
+                                onClick={() => handleEditAllenamento(allenamento)}
+                              >
+                                <span className="menu-icon">✏️</span> Modifica
+                              </button>
+                              <button 
+                                className="menu-item menu-item-danger"
+                                onClick={() => handleDeleteAllenamento(allenamento)}
+                              >
+                                <span className="menu-icon">🗑️</span> Elimina
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      <p>{allenamento.rounds.length} rounds</p>
+                      <button 
+                        className="btn-start"
+                        onClick={() => handleStartAllenamento(allenamento)}
+                      >
+                        Inizia
+                      </button>
                     </div>
                   ))}
                 </div>
