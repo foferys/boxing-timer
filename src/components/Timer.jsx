@@ -151,11 +151,40 @@ const Timer = ({ round, onRoundComplete, onTerminate }) => {
     return () => clearInterval(interval)
   }, [isRunning, isPaused, timeLeft, playBellSound])
 
+  // Funzione per passare al round successivo
+  const handleNextRound = useCallback(() => {
+    if (isRunning) {
+      stopTimer()
+    }
+    onRoundComplete()
+  }, [isRunning, stopTimer, onRoundComplete])
+
   return (
     <div className="timer-container" ref={timerContainerRef}>
       <div className="timer-display">
         <span className="timer-time">{formatTime(timeLeft)}</span>
-        <span className="timer-round">{round.titolo}</span>
+        <div className="timer-round-container">
+          <span className="timer-round">{round.titolo}</span>
+          <button 
+            className="btn-nav-round"
+            onClick={handleNextRound}
+            title="Passa al round successivo"
+          >
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              width="24" 
+              height="24" 
+              viewBox="0 0 24 24" 
+              fill="none" 
+              stroke="currentColor" 
+              strokeWidth="2" 
+              strokeLinecap="round" 
+              strokeLinejoin="round"
+            >
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
         {isRoundComplete && <div className="round-complete-message">Round completato!</div>}
       </div>
       
