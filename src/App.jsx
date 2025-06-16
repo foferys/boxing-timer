@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import Timer from './components/Timer'
 import NewWorkoutModal from './components/NewWorkoutModal'
-import CongratulationModal from './components/CongratulationModal'
+import EmotionalDiaryModal from './components/EmotionalDiaryModal'
 import useLocalStorage from './hooks/useLocalStorage'
 
 function App() {
@@ -12,7 +12,7 @@ function App() {
   const [roundAttivo, setRoundAttivo] = useState(0)
   const [allenamentoDaModificare, setAllenamentoDaModificare] = useState(null)
   const [erroreImportazione, setErroreImportazione] = useState(null)
-  const [mostraCongratulazioni, setMostraCongratulazioni] = useState(false)
+  const [mostraDiarioEmozionale, setMostraDiarioEmozionale] = useState(false)
   // Stato per gestire quale menu è aperto (null = nessun menu aperto, index = indice del menu aperto)
   const [menuAperto, setMenuAperto] = useState(null)
 
@@ -56,7 +56,7 @@ function App() {
       // Allenamento completato naturalmente
       setAllenamentoAttivo(null)
       setRoundAttivo(0)
-      setMostraCongratulazioni(true)
+      setMostraDiarioEmozionale(true)
     }
   }
 
@@ -252,8 +252,8 @@ function App() {
         />
       )}
 
-      {mostraCongratulazioni && (
-        <CongratulationModal onClose={() => setMostraCongratulazioni(false)} />
+      {mostraDiarioEmozionale && (
+        <EmotionalDiaryModal onClose={() => setMostraDiarioEmozionale(false)} />
       )}
     </div>
   )
