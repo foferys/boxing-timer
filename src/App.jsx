@@ -4,6 +4,7 @@ import Timer from './components/Timer'
 import NewWorkoutModal from './components/NewWorkoutModal'
 import EmotionalDiaryModal from './components/EmotionalDiaryModal'
 import useLocalStorage from './hooks/useLocalStorage'
+import { useBackendConnection } from './hooks/useBackendConnection'
 
 function App() {
   const [allenamenti, setAllenamenti] = useLocalStorage('allenamenti', [])
@@ -15,6 +16,9 @@ function App() {
   const [mostraDiarioEmozionale, setMostraDiarioEmozionale] = useState(false)
   // Stato per gestire quale menu è aperto (null = nessun menu aperto, index = indice del menu aperto)
   const [menuAperto, setMenuAperto] = useState(null)
+
+  // Hook per la connessione al backend
+  const { isConnected, isLoading: backendLoading, error: backendError, retryConnection } = useBackendConnection()
 
   // Effetto per chiudere il menu quando si clicca fuori
   // Questo effetto aggiunge un listener globale per il click del mouse
@@ -138,6 +142,20 @@ function App() {
     <div className="app-container">
       <header>
         <h1>Boxing Timer</h1>
+        <div className="backend-status">
+          {backendLoading ? (
+            <span className="status-indicator loading">🔄 Connessione...</span>
+          ) : isConnected ? (
+            <span className="status-indicator connected">✅ Backend connesso</span>
+          ) : (
+            <div className="status-indicator error">
+              <span>❌ Backend non disponibile</span>
+              <button onClick={retryConnection} className="retry-btn">
+                Riprova
+              </button>
+            </div>
+          )}
+        </div>
       </header>
       
       <main className="main-content">

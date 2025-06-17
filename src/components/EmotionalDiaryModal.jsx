@@ -1,138 +1,76 @@
 import { useState } from 'react'
+import { apiService } from '../services/apiService.js'
 
 const EmotionalDiaryModal = ({ onClose }) => {
-  const [testo, setTesto] = useState('')
-  const [sentiment, setSentiment] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState(null)
-  const [feedback, setFeedback] = useState('')
+  // 1. INIZIALIZZAZIONE DEGLI STATI - Gestione dello stato del componente
+  const [testo, setTesto] = useState('')                    // Testo inserito dall'utente
+  const [sentiment, setSentiment] = useState(null)          // Risultato sentiment dal backend
+  const [isLoading, setIsLoading] = useState(false)         // Stato di caricamento
+  const [error, setError] = useState(null)                  // Eventuali errori
+  const [feedback, setFeedback] = useState('')              // Feedback motivazionale
+  const [isFallbackFeedback, setIsFallbackFeedback] = useState(false) // Flag per feedback di fallback
 
+  // 2. FUNZIONE PRINCIPALE - Gestisce l'intero flusso di analisi
   const analizzaSentiment = async () => {
+    // 3. VALIDAZIONE INPUT - Controlla che l'utente abbia inserito del testo
     if (!testo.trim()) {
       setError('Per favore, scrivi come ti senti')
       return
     }
 
+    // 4. PREPARAZIONE UI - Resetta stati e mostra loading
     setIsLoading(true)
     setError(null)
+    setSentiment(null)
+    setFeedback('')
+    setIsFallbackFeedback(false)
 
     try {
-      // Verifica che la chiave API di Hugging Face sia configurata
-      const huggingfaceApiKey = import.meta.env.VITE_HUGGINGFACE_API_KEY;
-      if (!huggingfaceApiKey) {
-        throw new Error('Chiave API Hugging Face non configurata')
-      }
-
-      // Prima analizziamo il sentiment
-      const sentimentResponse = await fetch(
-        "https://api-inference.huggingface.co/models/distilbert/distilbert-base-uncased-finetuned-sst-2-english",
-        {
-          headers: {
-            "Authorization": `Bearer ${huggingfaceApiKey}`,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({ inputs: testo }),
-        }
-      )
-
-      const sentimentResult = await sentimentResponse.json()
-      console.log('Sentiment result:', sentimentResult)
-
-      if (!sentimentResponse.ok) {
-        throw new Error('Errore nell\'analisi del sentiment')
-      }
-
-      const sentimentLabel = sentimentResult[0][0].label.toLowerCase()
-      setSentiment(sentimentLabel)
-
-      // Ora generiamo una risposta motivazionale personalizzata usando OpenAI
-      const openaiApiKey = import.meta.env.VITE_OPENAI_API_KEY
+      console.log('🔍 Avvio analisi completa del testo...')
       
-      console.log('OpenAI API Key presente:', !!openaiApiKey)
-      console.log('OpenAI API Key (primi 10 caratteri):', openaiApiKey?.substring(0, 10))
+      // 5. CHIAMATA AL BACKEND - Invia richiesta tramite apiService
+      const result = await apiService.analyzeComplete(testo)
       
-      if (!openaiApiKey) {
-        throw new Error('Chiave API OpenAI non configurata')
-      }
-
-      const prompt = `Sei un coach motivazionale esperto di boxe. L'utente ha appena completato un allenamento di boxe e ha scritto: "${testo}". 
+      console.log('📊 Risultato analisi:', result)
       
-      Il sentiment dell'utente è: ${sentimentLabel === 'positive' ? 'positivo' : sentimentLabel === 'negative' ? 'negativo' : 'neutrale'}.
-
-      Genera una risposta motivazionale personalizzata e incoraggiante in italiano (massimo 2-3 frasi) che:
-      - Riconosca i sentimenti dell'utente
-      - Li motivi a continuare con l'allenamento
-      - Sia specifica per il boxe
-      - Usi un tono amichevole e supportivo
-      - Includa un emoji appropriata alla fine
-
-      Risposta:`
-
-      const feedbackResponse = await fetch(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          headers: {
-            "Authorization": `Bearer ${openaiApiKey}`,
-            "Content-Type": "application/json",
-          },
-          method: "POST",
-          body: JSON.stringify({
-            model: "gpt-3.5-turbo",
-            messages: [
-              {
-                role: "system",
-                content: "Sei un coach motivazionale esperto di boxe che aiuta gli atleti a mantenere la motivazione e l'entusiasmo per l'allenamento."
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ],
-            max_tokens: 150,
-            temperature: 0.7,
-            top_p: 0.9
-          }),
-        }
-      )
-
-      const feedbackResult = await feedbackResponse.json()
-      console.log('OpenAI feedback result:', feedbackResult)
-      console.log('OpenAI response status:', feedbackResponse.status)
-      console.log('OpenAI response ok:', feedbackResponse.ok)
-
-      if (!feedbackResponse.ok) {
-        console.error('Errore OpenAI completo:', feedbackResult)
-        throw new Error(`Errore OpenAI: ${feedbackResult.error?.message || 'Errore sconosciuto'}`)
-      }
-
-      // Estrai il testo generato dalla risposta di OpenAI
-      const generatedText = feedbackResult.choices?.[0]?.message?.content || ''
-      setFeedback(generatedText.trim() || 'Ottimo lavoro! Continua così! 💪')
+      // 6. ELABORAZIONE RISPOSTA - Estrae sentiment e feedback dal risultato
+      const { sentiment: sentimentResult, feedback: feedbackResult } = result
+      
+      // 7. AGGIORNAMENTO UI - Mostra i risultati all'utente
+      setSentiment(sentimentResult)
+      setFeedback(feedbackResult)
+      setIsFallbackFeedback(false)
 
     } catch (err) {
-      console.error('Errore:', err)
-      
-      // In caso di errore, imposta un feedback di fallback basato sul sentiment
-      let fallbackFeedback = ''
-      if (sentiment) {
-        switch (sentiment) {
-          case 'positive':
-            fallbackFeedback = 'Fantastico! Continua così! Il tuo allenamento ti sta facendo sentire bene! 💪'
-            break
-          case 'negative':
-            fallbackFeedback = 'Non preoccuparti, è normale avere giorni difficili. Ricorda che ogni allenamento ti rende più forte! 🌟'
-            break
-          default:
-            fallbackFeedback = 'Hai completato l\'allenamento! Continua a monitorare come ti senti per migliorare sempre di più! 🎯'
+      // 8. GESTIONE ERRORI - Gestisce errori di rete o del backend
+      console.error('❌ Errore nell\'analisi frontend:', err)
+
+      let errorMessage = 'Errore nell\'analisi. Riprova più tardi.'
+      let motivationalFeedback = 'Hai completato l\'allenamento! Ogni sessione ti rende più forte! 💪'
+
+      // 9. ANALISI ERRORI BACKEND - Gestisce errori specifici del backend
+      if (err.backendResponse) {
+        const backendErrorData = err.backendResponse;
+        if (backendErrorData.error) {
+          errorMessage = backendErrorData.error;
         }
-      } else {
-        fallbackFeedback = 'Hai completato l\'allenamento! Ogni sessione ti rende più forte! 💪'
+        if (backendErrorData.feedback) {
+          motivationalFeedback = backendErrorData.feedback;
+          setIsFallbackFeedback(true);
+        }
+        if (backendErrorData.sentiment) {
+          setSentiment(backendErrorData.sentiment);
+        }
+      } else if (err.message) {
+        errorMessage = `Errore: ${err.message}`;
       }
       
-      setFeedback(fallbackFeedback)
-      setError('Errore nell\'analisi. Riprova più tardi.')
+      // 10. MOSTRA ERRORI - Aggiorna UI con messaggi di errore
+      setError(errorMessage)
+      setFeedback(motivationalFeedback)
+
     } finally {
+      // 11. PULIZIA FINALE - Nasconde il loading
       setIsLoading(false)
     }
   }
@@ -144,6 +82,7 @@ const EmotionalDiaryModal = ({ onClose }) => {
         <p className="diary-intro">Come ti sei sentito durante questo allenamento?</p>
         
         <div className="diary-form">
+          {/* 12. INPUT UTENTE - Campo di testo per inserire le sensazioni */}
           <textarea
             value={testo}
             onChange={(e) => setTesto(e.target.value)}
@@ -152,8 +91,10 @@ const EmotionalDiaryModal = ({ onClose }) => {
             rows="4"
           />
           
+          {/* 13. MOSTRA ERRORI - Visualizza eventuali messaggi di errore */}
           {error && <p className="error-message">{error}</p>}
           
+          {/* 14. PULSANTE ANALISI - Avvia il processo di analisi */}
           <button 
             className="btn-analyze"
             onClick={analizzaSentiment}
@@ -163,14 +104,21 @@ const EmotionalDiaryModal = ({ onClose }) => {
           </button>
         </div>
 
-        {sentiment && (
+        {/* 15. RISULTATI - Mostra sentiment e feedback se disponibili */}
+        {sentiment && feedback && (
           <div className="sentiment-result">
+            {/* 16. BADGE SENTIMENT - Mostra il sentiment con emoji appropriata */}
             <div className={`sentiment-badge ${sentiment}`}>
               {sentiment === 'positive' ? '😊 Positivo' : 
                sentiment === 'negative' ? '😔 Negativo' : 
                '😐 Neutrale'}
             </div>
+            {/* 17. TESTO FEEDBACK - Mostra il feedback motivazionale */}
             <p className="feedback-text">{feedback}</p>
+            {/* 18. NOTA FALLBACK - Avvisa se il feedback è preimpostato */}
+            {isFallbackFeedback && (
+              <p className="fallback-notice">Nota: il feedback è preimpostato per un limite API raggiunto.</p>
+            )}
           </div>
         )}
 
