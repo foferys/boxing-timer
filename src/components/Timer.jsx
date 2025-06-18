@@ -35,17 +35,36 @@ const Timer = ({ round, onRoundComplete, onTerminate }) => {
     }
   }, [])
 
+  // Funzione per riprodurre il suono - DEFINITA PRIMA DEGLI USEEFFECT CHE LA UTILIZZANO
+  const playBellSound = useCallback(() => {
+    console.log('Riproduzione suono campanella')
+    if (audioRef.current) {
+      audioRef.current.currentTime = 0
+      audioRef.current.play()
+        .then(() => console.log('Suono campanella riprodotto con successo'))
+        .catch(error => console.error('Errore nella riproduzione del suono campanella:', error))
+    } else {
+      console.error('Audio non inizializzato')
+      // Fallback alla funzione playSound
+      playSound('bell.mp3')
+    }
+  }, [])
+
   // Effetto per riavviare il timer quando cambia il round
   useEffect(() => {
     if (round !== roundRef.current) {
       roundRef.current = round
       setTimeLeft(round.durata)
-      setIsRunning(true)
       setIsPaused(false)
       setIsRoundComplete(false)
-      speakText(round.titolo)  // Annuncia il titolo del round
+      playBellSound() // Riproduce la campanella all'inizio del nuovo round
+      // Dopo 4 secondi: avvia il timer e annuncia il titolo del round
+      setTimeout(() => {
+        setIsRunning(true)
+        speakText(round.titolo)
+      }, 4000)
     }
-  }, [round])
+  }, [round, playBellSound])
 
   // Effetto per gestire il passaggio al round successivo dopo il ritardo
   useEffect(() => {
@@ -66,10 +85,14 @@ const Timer = ({ round, onRoundComplete, onTerminate }) => {
   }
 
   const startTimer = useCallback(() => {
-    setIsRunning(true)
     setIsPaused(false)
-    speakText(round.titolo)
-  }, [round.titolo])
+    playBellSound() // Riproduce la campanella all'inizio dell'allenamento
+    // Dopo 4 secondi: avvia il timer e annuncia il titolo del round
+    setTimeout(() => {
+      setIsRunning(true)
+      speakText(round.titolo)
+    }, 4000)
+  }, [round.titolo, playBellSound])
 
   const pauseTimer = useCallback(() => {
     setIsPaused(true)
@@ -88,21 +111,6 @@ const Timer = ({ round, onRoundComplete, onTerminate }) => {
     stopTimer()
     onTerminate()
   }, [stopTimer, onTerminate])
-
-  // Funzione per riprodurre il suono
-  const playBellSound = useCallback(() => {
-    console.log('Riproduzione suono campanella')
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0
-      audioRef.current.play()
-        .then(() => console.log('Suono campanella riprodotto con successo'))
-        .catch(error => console.error('Errore nella riproduzione del suono campanella:', error))
-    } else {
-      console.error('Audio non inizializzato')
-      // Fallback alla funzione playSound
-      playSound('bell.mp3')
-    }
-  }, [])
 
   // Gestione fullscreen
   const toggleFullscreen = useCallback(() => {

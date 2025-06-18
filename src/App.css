@@ -235,11 +235,6 @@ button:hover {
   color: var(--secondary-color);
 }
 
-/* Effetto hover per gli elementi del menu */
-.workout-menu .menu-item:hover {
-  background-color: #f5f5f5;
-}
-
 /* Stile per le icone nel menu */
 .workout-menu .menu-icon {
   margin-right: 0.5rem;
@@ -251,9 +246,30 @@ button:hover {
   color: #e74c3c;
 }
 
-/* Effetto hover per il pulsante di eliminazione */
+/* Stile speciale per il pulsante di esportazione PDF
+   Utilizza il colore blu (#2196f3) per distinguerlo dagli altri pulsanti del menu
+   e per indicare visivamente che si tratta di un'azione di esportazione */
+.workout-menu .menu-item-pdf {
+  color: #2196f3;
+}
+
+/* Effetto hover per il pulsante di esportazione PDF
+   Sfondo azzurro chiaro (#e3f2fd) per mantenere la coerenza con il colore blu
+   e fornire feedback visivo all'utente durante l'interazione */
+.workout-menu .menu-item-pdf:hover {
+  background-color: #e3f2fd;
+}
+
+/* Effetto hover per il pulsante di eliminazione
+   Sfondo rosso chiaro (#ffebee) per mantenere la coerenza con il colore rosso
+   e indicare visivamente l'azione pericolosa */
 .workout-menu .menu-item-danger:hover {
   background-color: #ffebee;
+}
+
+/* Effetto hover per gli elementi del menu */
+.workout-menu .menu-item:hover {
+  background-color: #f5f5f5;
 }
 
 .workout-card h3 {
