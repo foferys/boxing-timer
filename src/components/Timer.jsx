@@ -59,9 +59,13 @@ const Timer = ({ round, onRoundComplete, onTerminate }) => {
       setIsRoundComplete(false)
       playBellSound() // Riproduce la campanella all'inizio del nuovo round
       // Dopo 4 secondi: avvia il timer e annuncia il titolo del round
-      setTimeout(() => {
+      setTimeout(async () => {
         setIsRunning(true)
-        speakText(round.titolo)
+        try {
+          await speakText(round.titolo)
+        } catch (error) {
+          console.error('Errore nella sintesi vocale:', error)
+        }
       }, 4000)
     }
   }, [round, playBellSound])
@@ -88,9 +92,13 @@ const Timer = ({ round, onRoundComplete, onTerminate }) => {
     setIsPaused(false)
     playBellSound() // Riproduce la campanella all'inizio dell'allenamento
     // Dopo 4 secondi: avvia il timer e annuncia il titolo del round
-    setTimeout(() => {
+    setTimeout(async () => {
       setIsRunning(true)
-      speakText(round.titolo)
+      try {
+        await speakText(round.titolo)
+      } catch (error) {
+        console.error('Errore nella sintesi vocale:', error)
+      }
     }, 4000)
   }, [round.titolo, playBellSound])
 
