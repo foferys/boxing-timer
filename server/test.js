@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { analyzeSentiment } from './services/sentimentService.js';
-import { generateMotivationalFeedback } from './services/openaiService.js';
+import { generateMotivationalFeedbackOllama } from './services/openaiService.js';
 
 // Carica le variabili d'ambiente
 dotenv.config();
@@ -27,32 +27,28 @@ async function testBackendServices() {
     console.log('');
   }
 
-  // Test 3: Test OpenAI feedback
-  if (process.env.OPENAI_API_KEY) {
-    console.log('3️⃣ Test generazione feedback:');
-    try {
-      const testText = "Ho completato il mio allenamento di boxe!";
-      const testSentiment = "positive";
-      const feedback = await generateMotivationalFeedback(testText, testSentiment);
-      console.log(`   ✅ Feedback generato: ${feedback.substring(0, 50)}...`);
-    } catch (error) {
-      console.log(`   ❌ Errore feedback: ${error.message}`);
-    }
-    console.log('');
+  // Test 3: Test Ollama feedback
+  console.log('3️⃣ Test generazione feedback (Ollama):');
+  try {
+    const testText = "Ho completato il mio allenamento di boxe!";
+    const testSentiment = "positive";
+    const feedback = await generateMotivationalFeedbackOllama(testText, testSentiment);
+    console.log(`   ✅ Feedback generato: ${feedback.substring(0, 50)}...`);
+  } catch (error) {
+    console.log(`   ❌ Errore feedback: ${error.message}`);
   }
+  console.log('');
 
   // Test 4: Test completo
-  if (process.env.OPENAI_API_KEY && process.env.HUGGINGFACE_API_KEY) {
-    console.log('4️⃣ Test completo:');
-    try {
-      const testText = "Mi sento stanco ma soddisfatto del mio allenamento";
-      const sentiment = await analyzeSentiment(testText);
-      const feedback = await generateMotivationalFeedback(testText, sentiment);
-      console.log(`   ✅ Sentiment: ${sentiment}`);
-      console.log(`   ✅ Feedback: ${feedback.substring(0, 50)}...`);
-    } catch (error) {
-      console.log(`   ❌ Errore test completo: ${error.message}`);
-    }
+  console.log('4️⃣ Test completo (Ollama):');
+  try {
+    const testText = "Mi sento stanco ma soddisfatto del mio allenamento";
+    const sentiment = await analyzeSentiment(testText);
+    const feedback = await generateMotivationalFeedbackOllama(testText, sentiment);
+    console.log(`   ✅ Sentiment: ${sentiment}`);
+    console.log(`   ✅ Feedback: ${feedback.substring(0, 50)}...`);
+  } catch (error) {
+    console.log(`   ❌ Errore test completo: ${error.message}`);
   }
 
   console.log('\n🏁 Test completati!');

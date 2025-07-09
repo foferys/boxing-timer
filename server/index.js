@@ -2,7 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { analyzeSentiment } from './services/sentimentService.js';
-import { generateMotivationalFeedback } from './services/openaiService.js';
+// import { generateMotivationalFeedback } from './services/openaiService.js';
+import { generateMotivationalFeedbackOllama } from './services/openaiService.js';
 
 // Carica le variabili d'ambiente
 dotenv.config();
@@ -55,7 +56,8 @@ app.post('/api/feedback', async (req, res) => {
       });
     }
 
-    const feedback = await generateMotivationalFeedback(text, sentiment);
+    // const feedback = await generateMotivationalFeedback(text, sentiment);
+    const feedback = await generateMotivationalFeedbackOllama(text, sentiment);
     res.json({ feedback });
   } catch (error) {
     // Gestione fallback per qualsiasi errore OpenAI
@@ -93,9 +95,10 @@ app.post('/api/analyze', async (req, res) => {
     // 31. ANALISI SENTIMENT - Chiama il servizio Hugging Face per sentiment
     const sentiment = await analyzeSentiment(text);
     
-    // 32. GENERAZIONE FEEDBACK - Chiama OpenAI per generare feedback motivazionale
+    // 32. GENERAZIONE FEEDBACK - Chiama Ollama per generare feedback motivazionale
     try {
-      const feedback = await generateMotivationalFeedback(text, sentiment);
+      // const feedback = await generateMotivationalFeedback(text, sentiment);
+      const feedback = await generateMotivationalFeedbackOllama(text, sentiment);
       // 33. RISPOSTA SUCCESSO - Invia sentiment e feedback al frontend
       res.json({ sentiment, feedback });
     } catch (error) {

@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
+import fetch from 'node-fetch'; // Per chiamate HTTP verso Ollama
 
 // Carica le variabili d'ambiente
 dotenv.config();
@@ -97,6 +98,70 @@ export async function generateMotivationalFeedback(text, sentiment) {
     }
     
     throw new Error(`Errore nella generazione del feedback: ${error.message}`);
+  }
+}
+
+/**
+ * Genera feedback motivazionale personalizzato usando Ollama locale
+ * @param {string} text - Il testo dell'utente
+ * @param {string} sentiment - Il sentiment rilevato
+ * @returns {Promise<string>} - Il feedback motivazionale generato
+ */
+export async function generateMotivationalFeedbackOllama(text, sentiment) {
+  try {
+    // Crea il prompt personalizzato basato sul sentiment
+    const sentimentText = sentiment === 'positive' ? 'positivo' : 
+                         sentiment === 'negative' ? 'negativo' : 'neutrale';
+
+    const prompt = `Sei un coach motivazionale esperto di boxe. L'utente ha appena completato un allenamento di boxe e ha scritto: "${text}". 
+    
+    Il sentiment dell'utente è: ${sentimentText}.
+
+    Genera una risposta motivazionale personalizzata e incoraggiante in italiano (massimo 2-3 frasi) che:
+    - Riconosca i sentimenti dell'utente
+    - Li motivi a continuare con l'allenamento
+    - Sia specifica per il boxe
+    - Usi un tono amichevole e supportivo
+    - Includa un emoji appropriata alla fine
+
+    Risposta:`;
+
+    // Chiamata all'API di Ollama locale
+    const response = await fetch('http://localhost:11434/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'llama3:8b',
+        messages: [
+          {
+            role: 'system',
+            content: "Sei un coach motivazionale esperto di boxe che aiuta gli atleti a mantenere la motivazione e l'entusiasmo per l'allenamento."
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 150,
+        temperature: 0.7,
+        top_p: 0.9
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Errore Ollama: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    if (!data.choices || data.choices.length === 0) {
+      throw new Error('Nessuna risposta ricevuta da Ollama');
+    }
+    const feedback = data.choices[0].message.content.trim();
+    console.log('✅ Feedback Ollama generato:', feedback.substring(0, 50) + '...');
+    return feedback;
+  } catch (error) {
+    console.error('❌ Errore nella generazione del feedback con Ollama:', error);
+    throw new Error(`Errore nella generazione del feedback con Ollama: ${error.message}`);
   }
 }
 
